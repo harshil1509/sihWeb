@@ -12,25 +12,25 @@ import axios from 'axios';
 
 
 
-const columns = [
-  { id: 'number', label: 'S. No', minWidth: 170 },
+// const columns = [
+//   { id: 'number', label: 'S. No', minWidth: 170 },
 
-  { id: 'Name', label: 'Name', minWidth: 170 },
-  { id: "father’s name", label: "Father's Name", minWidth: 100 },
-  {
-    id: 'DOB',
-    label: 'DOB',
-    minWidth: 170,
-    align: 'right',
-  },
-  {
-    id: 'Address',
-    label: 'Address',
-    minWidth: 170,
-    align: 'right',
-  },
+//   // { id: 'Name', label: 'Name', minWidth: 170 },
+//   // { id: "father’s name", label: "Father's Name", minWidth: 100 },
+//   // {
+//   //   id: 'DOB',
+//   //   label: 'DOB',
+//   //   minWidth: 170,
+//   //   align: 'right',
+//   // },
+//   // {
+//   //   id: 'Address',
+//   //   label: 'Address',
+//   //   minWidth: 170,
+//   //   align: 'right',
+//   // },
 
-];
+// ];
 
 function createData(name, fatherName, dob, address) {
   return { name, fatherName, dob, address };
@@ -57,11 +57,12 @@ const rows = [
 
 
 
-function CreateTable({rows, loading, file}) {
+function CreateTable({cols,rows, loading, file}) {
    
-    rows.map(row=>{
-        row['number'] = row[""]
-    })
+    // rows.map(row=>{
+    //     row['number'] = rows.ind
+    // })
+  const columns = cols
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
@@ -118,6 +119,7 @@ function CreateTable({rows, loading, file}) {
                     <TableRow hover role="checkbox" tabIndex={-1} key={row.number} onClick={()=>makeApiCall(row.number)}>
                       {columns.map((column) => {
                         let value = row[column.id];
+                        
                         {/* console.log(column.id, value, row) */}
                         if(!value){
                           value = row["father's name"]

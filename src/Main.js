@@ -3,6 +3,7 @@ import Papa from "papaparse";
 import CreateTable from './Table'
 import axios from 'axios';
 import SearchBar from "material-ui-search-bar";
+import cssVars from "@mui/system/cssVars";
 
 
 function createData(name, fatherName, dob, address) {
@@ -21,14 +22,16 @@ function Main() {
 
   const [rows, setRows] = React.useState([]);
   const [filteredRow, setFilteredRow] = useState([])
+  const [cols1, setCols1] = useState([])
+  const [cols2, setCols2] = useState([])
   let tempRows = []
   const [rows2, setRows2] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [loading2, setLoading2] = React.useState(false);
 
   const makeApiCall = async () => {
-    console.log("luah",formData.get('csv1'));
-    console.log("luah2",formData.get('csv2'));
+    console.log("luah", formData.get('csv1'));
+    console.log("luah2", formData.get('csv2'));
     const url = "http://localhost:8000/backend/upload-csv/"
     try {
       const res = await axios.post(url, formData);
@@ -51,10 +54,11 @@ function Main() {
   const [error, setError] = useState("");
 
   const [file, setFile] = useState("");
+  const [file2, setFile2] = useState("")
 
 
   function handleFileChange(e, val) {
-  
+
     setError("");
 
     // Check if user has entered the file
@@ -71,7 +75,13 @@ function Main() {
       }
 
       // If input type is correct set the state
-      setFile(inputFile);
+      if (val == 1) {
+
+        setFile(inputFile);
+      }
+      else {
+        setFile2(inputFile)
+      }
 
       if (val == 1) {
         formData.append("csv1", inputFile);
@@ -100,18 +110,43 @@ function Main() {
     // loads, we parse it and set the data.
     reader.onload = async ({ target }) => {
       const csv = Papa.parse(target.result, { header: true });
+      console.log("columns", csv.meta.fields);
+      let letTemp = []
+      letTemp.push({ id: 'number', label: 'S. No', minWidth: 170 })
+      csv.meta.fields.map(col => {
+        if(col!=""){
+          let obj = {}
+          obj["id"] = col
+          obj["label"] = col
+          letTemp.push(obj)
+
+        }
+      })
+ 
+      if (val == 1) {
+
+        setCols1(letTemp)
+      }
+      else {
+        setCols2(letTemp)
+      }
       const parsedData = csv?.data;
       if (val === 1) {
 
         setRows(parsedData);
         tempRows = parsedData
-        tempRows.map(row=>{
+        tempRows.map(row => {
           row['number'] = tempRows.indexOf(row) + 1
-      })
-      console.log(tempRows)
+        })
+        setRows(tempRows)
       }
       else {
         setRows2(parsedData);
+        tempRows = parsedData
+        tempRows.map(row => {
+          row['number'] = tempRows.indexOf(row) + 1
+        })
+        setRows2(tempRows)
       }
       // console.log(parsedData[0]['Name']);
       //map parsedData and createData function to create rows
@@ -135,19 +170,17 @@ function Main() {
 
   const [searchedVal, setSearchedVal] = useState("")
 
-  const requestSearch = (searchedVal) => {    
-    
-    rows.map(row=>{
-      if(rows.indexOf(row) == searchedVal){
-        console.log(row)
+  const requestSearch = (searchedVal) => {
+
+    rows.map(row => {
+      if (rows.indexOf(row) == searchedVal) {
         let newArr = []
         newArr.push(row)
         setFilteredRow(newArr)
-        console.log(filteredRow)
       }
-      
+
     })
-    
+
   };
 
   const cancelSearch = () => {
@@ -170,11 +203,11 @@ function Main() {
 
       {!loading && file != "" && (
         <>
-        <SearchBar
-          value={searchedVal}
-          onChange={(searchVal) => requestSearch(searchVal)}
-        />
-        <CreateTable rows={filteredRow.length!=0 ? filteredRow : rows} loading={loading} file={file} />
+          <SearchBar
+            value={searchedVal}
+            onChange={(searchVal) => requestSearch(searchVal)}
+          />
+          <CreateTable cols={cols1} rows={filteredRow.length != 0 ? filteredRow : rows} loading={loading} file={file} />
         </>
       )}
       <label htmlFor="csvInput" style={{ display: "block" }}>
@@ -188,8 +221,8 @@ function Main() {
       />
       {loading2 ? <div>Loading...</div> : null}
 
-      {!loading2 && file != "" && (
-        <CreateTable rows={rows2} loading={loading} file={file} />
+      {!loading2 && file2 != "" && (
+        <CreateTable cols={cols2} rows={rows2} loading={loading} file={file} />
       )}
     </div>
   )

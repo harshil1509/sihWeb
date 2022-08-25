@@ -9,6 +9,11 @@ import * as animationData from './assessts/loader1.json'
 import { useForm } from "react-hook-form";
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
+import './MainStyle.css'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+
 
 
 // Allowed extensions for input file
@@ -33,6 +38,15 @@ function Main() {
 
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [open, setOpen] = useState(false);
+  const notify = () => toast.success('ENTRY ADDED SUCCESSFULLY !!', {
+    position: "top-center",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    });
 
 
   const defaultOptions = {
@@ -235,6 +249,7 @@ function Main() {
 
         newObj[i] = data[mapping[i]]
       }
+      
     })
 
     // make api call and update backend
@@ -250,67 +265,92 @@ function Main() {
     newObj['number'] = rows.length + 1
     console.log(data, newObj);
     setRows(curr => [...curr, newObj])
+    notify()
+    setOpen(false)
   }
 
 
 
   const cancelSearch = () => {
+    console.log('called')
     setSearchedVal("");
     requestSearch(searchedVal);
   };
 
   return (
-    <div>
-      <label htmlFor="csvInput" style={{ display: "block" }}>
-        Enter CSV File
-      </label>
-      <input
-        onChange={(event) => handleFileChange(event, 1)}
-        id="csvInput"
-        name="file"
-        type="File"
-      />
-      {loading ? <div>
-        <Lottie options={defaultOptions}
-          height={260}
-          width={260}
-        />
-      </div> : null}
+    <div className="container">
+      <div className="left-half">
+        <label htmlFor="csvInput" style={{ display: "block", fontFamily: "Comfortaa", fontSize: 36 }}>
+          Enter CSV File 1
+        </label>
 
-      {!loading && file != "" && (
-        <>
-          <SearchBar
-            value={searchedVal}
-            onChange={(searchVal) => requestSearch(searchVal)}
+        <input
+          onChange={(event) => handleFileChange(event, 1)}
+          id="csvInput"
+          name="file"
+          type="File"
+          className="inputfile"
+        />
+        {loading ? <div>
+          <Lottie options={defaultOptions}
+            height={260}
+            width={260}
           />
-          <CreateTable cols={cols1} rows={filteredRow.length != 0 & searchedVal != "" ? filteredRow : rows} loading={loading} file={file} />
-        </>
-      )}
-      <label htmlFor="csvInput" style={{ display: "block" }}>
-        Enter CSV File
-      </label>
-      <input
-        onChange={(event) => handleFileChange(event, 2)}
-        id="csvInput2"
-        name="file"
-        type="File"
-      />
-      {loading2 ? <div>
-        <Lottie options={defaultOptions}
-          height={250}
-          width={250}
+        </div> : null}
+
+        {!loading && file != "" && (
+          <>
+            <div style={{ marginTop: 20 }}>
+              <SearchBar
+                value={searchedVal}
+                onChange={(searchVal) => requestSearch(searchVal)}
+                cancelSearch={cancelSearch}
+              />
+            </div>
+            <div style={{ marginTop: 20 }}>
+              <CreateTable cols={cols1} rows={filteredRow.length != 0 & searchedVal != "" ? filteredRow : rows} loading={loading} file={file} />
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="right-half">
+        <label htmlFor="csvInput" style={{ display: "block", fontFamily: "Comfortaa", fontSize: 36, color: "#fff" }}>
+          Enter CSV File 2
+        </label>
+        <input
+          onChange={(event) => handleFileChange(event, 2)}
+          id="csvInput2"
+          name="file"
+          type="File"
+          className="inputfileNew"
         />
-      </div> : null}
+        {loading2 ? <div>
+          <Lottie options={defaultOptions}
+            height={250}
+            width={250}
+          />
+        </div> : null}
 
-      {!loading2 && file2 != "" && (
-        <>
+        {!loading2 && file2 != "" && (
+          <>
+            <div style={{ marginTop: 85 }}>
 
-        <CreateTable cols={cols2} rows={rows2} loading={loading} file={file} />
-        <Button variant="contained" style={{ marginTop: 20 }} onClick={() => setOpen(true)}>Add Custom Entry</Button>
+              <CreateTable cols={cols2} rows={rows2} loading={loading} file={file} />
+            </div>
+            <div style={{ position: "absolute", marginTop: -650, marginLeft: -230 }}>
+              <Button variant="contained" style={{
+                borderRadius: 35,
+                backgroundColor: "blue",
+                padding: "18px 36px",
+                fontSize: "12px",
+                color:"#fff"
+              }} onClick={() => setOpen(true)}>Add Custom Entry</Button>
+            </div>
+          </>
 
-        </>
-        
-      )}
+        )}
+      </div>
 
       {open ? (
         <Modal
@@ -321,34 +361,41 @@ function Main() {
           aria-describedby="keep-mounted-modal-description"
         >
           <Box sx={style}>
+          <h2>Please fill in the details below</h2>
+
 
             <form onSubmit={handleSubmit(onSubmit)}>
               {
                 Object.keys(mapping).map(i => {
                   return (
-                    mapping[i] != 'Unnamed' ? <input defaultValue={mapping[i]} {...register(mapping[i])} /> : null
+                    <div>
+                    {mapping[i] != 'Unnamed' ?
+                    (
+                      <div style={{display:"flex", flexDirection:"row", justifyContent:"space-between", marginTop: 15}}>
+                      <h4>{mapping[i] + ":"} </h4>
+
+                      <input {...register(mapping[i])} style={{width: 280, fontSize: 19, alignItems:"center", justifyContent:"center", alignContent:"center", backgroundColor:"lightcyan"}}/>
+                      </div>
+                    )
+                      : null}
+
+                    </div>
                   )
                 })
               }
-              {/* {colNames.map(i => {
-                i!="father's name" ? console.log(i) : console.log('jajd')
-                return (
-                  
-                  i!='' ? i!="father's name" ? <input defaultValue={i} {...register(i)} /> : <input {...register("example")}/> : <input {...register('unnamed')}/>
-                 
-                )
-              })} */}
-              {/* <input defaultValue="test" {...register("father's name")} /> */}
-
-              {/* <input {...register("father'sname", { required: true })} /> */}
-              {errors.exampleRequired && <span>This field is required</span>}
-
-              <input type="submit" />
+              <div style={{display:"flex", alignItems:"center", justifyContent : "center", marginTop: 15}}>
+              <input type="submit" style={{width: 150, height: 45, backgroundColor:"blue", color:"#fff", borderRadius: 45, fontSize: 20}}/>
+              </div>
             </form>
           </Box>
         </Modal>
       ) :
         null}
+        <ToastContainer 
+          position="top-left"
+          type="success"
+          theme="colored"
+        />
     </div>
   )
 }

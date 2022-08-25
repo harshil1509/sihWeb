@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Papa from "papaparse";
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -9,6 +8,8 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import axios from 'axios';
+import ModalOpener from './Modal'
+
 
 
 
@@ -65,6 +66,8 @@ function CreateTable({cols,rows, loading, file}) {
   const columns = cols
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [resData, setResData] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -74,25 +77,33 @@ function CreateTable({cols,rows, loading, file}) {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
+  const [open, setIsOpen] = useState(false)
 
   const makeApiCall =async (idx)=>{
-    const url2 = `http://localhost:8000/backend/fetch-results/?idx=${idx}`
+    const url2 = `http://localhost:8000/backend/fetch-results/?idx=${idx-1}`
 
+    setIsLoading(true)
     console.log(idx, url2)
 
     try {
       const res = await axios.get(url2);
       console.log(res.data.data)
+      setResData(res.data.data)
+      setIsLoading(false)
+      setIsOpen(true)
+
     } catch (error) {
       console.error(error);
     }
   }
 
-  
  
   return (
     <div>
-     
+    
+    
+      <ModalOpener open={open} setOpen={setIsOpen} data={resData} columns={cols}/>
+  
     {file!="" && !loading ? <div>
    
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>

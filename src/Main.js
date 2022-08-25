@@ -3,22 +3,46 @@ import Papa from "papaparse";
 import CreateTable from './Table'
 import axios from 'axios';
 import SearchBar from "material-ui-search-bar";
-import cssVars from "@mui/system/cssVars";
-
-
-function createData(name, fatherName, dob, address) {
-  return { name, fatherName, dob, address };
-}
+import Lottie from 'react-lottie';
+import Button from '@mui/material/Button';
+import * as animationData from './assessts/loader1.json'
+import { useForm } from "react-hook-form";
+import Box from '@mui/material/Box';
+import Modal from '@mui/material/Modal';
 
 
 // Allowed extensions for input file
 const allowedExtensions = ["csv"];
+
+const style = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
 
 
 const formData = new FormData();
 
 function Main() {
 
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [open, setOpen] = useState(false);
+
+
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: animationData,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid slice'
+    }
+  };
 
   const [rows, setRows] = React.useState([]);
   const [filteredRow, setFilteredRow] = useState([])
@@ -30,8 +54,7 @@ function Main() {
   const [loading2, setLoading2] = React.useState(false);
 
   const makeApiCall = async () => {
-    console.log("luah", formData.get('csv1'));
-    console.log("luah2", formData.get('csv2'));
+
     const url = "http://localhost:8000/backend/upload-csv/"
     try {
       const res = await axios.post(url, formData);
@@ -40,14 +63,6 @@ function Main() {
       console.error(error);
     }
 
-    // const url2 = "http://localhost:8000/backend/fetch-results/?idx=200"
-
-    // try {
-    //   const res = await axios.get(url2);
-    //   console.log(res)
-    // } catch (error) {
-    //   console.error(error);
-    // }
   }
 
 
@@ -97,6 +112,10 @@ function Main() {
 
   };
 
+  const [colNames, setColNames] = useState([])
+  const [mapping, setMapping] = useState({})
+  let forwardMap = {}
+
   const handleParse = (inpFile, val) => {
     // If user clicks the parse button without
     // a file we show a error
@@ -110,11 +129,31 @@ function Main() {
     // loads, we parse it and set the data.
     reader.onload = async ({ target }) => {
       const csv = Papa.parse(target.result, { header: true });
-      console.log("columns", csv.meta.fields);
       let letTemp = []
       letTemp.push({ id: 'number', label: 'S. No', minWidth: 170 })
+      setColNames(csv.meta.fields)
+
+      csv.meta.fields.map(i => {
+        let newStr = ""
+
+        if (i.includes(" ")) {
+          newStr = i.split(" ").join("")
+          newStr = i.replace(/[^a-zA-Z0-9 ]/g, '')
+        }
+        else if (i == "") {
+          newStr = "Unnamed"
+        }
+        else {
+          newStr = i
+        }
+        forwardMap[i] = newStr
+      })
+
+
+      setMapping(forwardMap)
+
       csv.meta.fields.map(col => {
-        if(col!=""){
+        if (col != "") {
           let obj = {}
           obj["id"] = col
           obj["label"] = col
@@ -122,7 +161,7 @@ function Main() {
 
         }
       })
- 
+
       if (val == 1) {
 
         setCols1(letTemp)
@@ -171,17 +210,49 @@ function Main() {
   const [searchedVal, setSearchedVal] = useState("")
 
   const requestSearch = (searchedVal) => {
+    setSearchedVal(searchedVal)
+    console.log(rows.length)
+    const idx = parseInt(searchedVal)
+    console.log(idx)
+    if (rows?.[idx - 1]) {
+      let newArr = []
+      newArr.push(rows[idx - 1])
+      setFilteredRow(newArr)
+    } else {
+      setFilteredRow([])
+    }
+  };
 
-    rows.map(row => {
-      if (rows.indexOf(row) == searchedVal) {
-        let newArr = []
-        newArr.push(row)
-        setFilteredRow(newArr)
+
+
+  const onSubmit = async (data) => {
+    let newObj = {}
+    Object.keys(mapping).map(i => {
+      if (i == "") {
+        console.log("yes")
+        newObj[""] = rows.length + 1
+      } else {
+
+        newObj[i] = data[mapping[i]]
       }
-
     })
 
-  };
+    // make api call and update backend
+    const url = "http://127.0.0.1:8000/backend/update-csv/"
+    try {
+      const res = await axios.post(url, { entry: newObj })
+      console.log(res)
+    } catch (error) {
+      console.log(error)
+    }
+
+    //now update rows
+    newObj['number'] = rows.length + 1
+    console.log(data, newObj);
+    setRows(curr => [...curr, newObj])
+  }
+
+
 
   const cancelSearch = () => {
     setSearchedVal("");
@@ -199,7 +270,12 @@ function Main() {
         name="file"
         type="File"
       />
-      {loading ? <div>Loading...</div> : null}
+      {loading ? <div>
+        <Lottie options={defaultOptions}
+          height={260}
+          width={260}
+        />
+      </div> : null}
 
       {!loading && file != "" && (
         <>
@@ -207,7 +283,8 @@ function Main() {
             value={searchedVal}
             onChange={(searchVal) => requestSearch(searchVal)}
           />
-          <CreateTable cols={cols1} rows={filteredRow.length != 0 ? filteredRow : rows} loading={loading} file={file} />
+          <CreateTable cols={cols1} rows={filteredRow.length != 0 & searchedVal != "" ? filteredRow : rows} loading={loading} file={file} />
+          <Button variant="contained" style={{ marginTop: 20 }} onClick={() => setOpen(true)}>Add Custom Entry</Button>
         </>
       )}
       <label htmlFor="csvInput" style={{ display: "block" }}>
@@ -219,11 +296,54 @@ function Main() {
         name="file"
         type="File"
       />
-      {loading2 ? <div>Loading...</div> : null}
+      {loading2 ? <div>
+        <Lottie options={defaultOptions}
+          height={250}
+          width={250}
+        />
+      </div> : null}
 
       {!loading2 && file2 != "" && (
         <CreateTable cols={cols2} rows={rows2} loading={loading} file={file} />
       )}
+
+      {open ? (
+        <Modal
+          keepMounted
+          open={open}
+          onClose={() => setOpen(false)}
+          aria-labelledby="keep-mounted-modal-title"
+          aria-describedby="keep-mounted-modal-description"
+        >
+          <Box sx={style}>
+
+            <form onSubmit={handleSubmit(onSubmit)}>
+              {
+                Object.keys(mapping).map(i => {
+                  return (
+                    mapping[i] != 'Unnamed' ? <input defaultValue={mapping[i]} {...register(mapping[i])} /> : null
+                  )
+                })
+              }
+              {/* {colNames.map(i => {
+                i!="father's name" ? console.log(i) : console.log('jajd')
+                return (
+                  
+                  i!='' ? i!="father's name" ? <input defaultValue={i} {...register(i)} /> : <input {...register("example")}/> : <input {...register('unnamed')}/>
+                 
+                )
+              })} */}
+              {/* <input defaultValue="test" {...register("father's name")} /> */}
+
+              {/* <input {...register("father'sname", { required: true })} /> */}
+              {errors.exampleRequired && <span>This field is required</span>}
+
+              <input type="submit" />
+            </form>
+          </Box>
+        </Modal>
+      ) :
+        null}
     </div>
   )
 }

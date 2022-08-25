@@ -58,7 +58,7 @@ function Main() {
     const url = "http://localhost:8000/backend/upload-csv/"
     try {
       const res = await axios.post(url, formData);
-      console.log(res)
+      // console.log(res)
     } catch (error) {
       console.error(error);
     }
@@ -284,7 +284,6 @@ function Main() {
             onChange={(searchVal) => requestSearch(searchVal)}
           />
           <CreateTable cols={cols1} rows={filteredRow.length != 0 & searchedVal != "" ? filteredRow : rows} loading={loading} file={file} />
-          <Button variant="contained" style={{ marginTop: 20 }} onClick={() => setOpen(true)}>Add Custom Entry</Button>
         </>
       )}
       <label htmlFor="csvInput" style={{ display: "block" }}>
@@ -304,7 +303,13 @@ function Main() {
       </div> : null}
 
       {!loading2 && file2 != "" && (
+        <>
+
         <CreateTable cols={cols2} rows={rows2} loading={loading} file={file} />
+        <Button variant="contained" style={{ marginTop: 20 }} onClick={() => setOpen(true)}>Add Custom Entry</Button>
+
+        </>
+        
       )}
 
       {open ? (

@@ -6,6 +6,9 @@ import SearchBar from "material-ui-search-bar";
 import Lottie from 'react-lottie';
 import Button from '@mui/material/Button';
 import * as animationData from './assessts/loader1.json'
+import * as animationData1 from './assessts/ingest.json'
+import * as animationData2 from './assessts/check.json'
+
 import { useForm } from "react-hook-form";
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
@@ -45,6 +48,19 @@ const style2 = {
   p: 4,
 };
 
+const style3 = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 300,
+  height: 300,
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
+
 
 const formData = new FormData();
 
@@ -77,6 +93,24 @@ function Main() {
     loop: true,
     autoplay: true,
     animationData: animationData,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid slice'
+    }
+  };
+
+  const defaultOptions1 = {
+    loop: true,
+    autoplay: true,
+    animationData: animationData1,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid slice'
+    }
+  };
+
+  const defaultOptions2 = {
+    loop: true,
+    autoplay: true,
+    animationData: animationData2,
     rendererSettings: {
       preserveAspectRatio: 'xMidYMid slice'
     }
@@ -334,13 +368,24 @@ function Main() {
 
   }
 
+  const [imodal, setimodal] = useState(false)
+  const [iloader, setiloader] = useState(true)
+
+  const handleimodal = () => {
+    setiloader(true)
+    setTimeout(() => {
+      setiloader(false)
+    }, 20000);
+    setimodal(true)
+  }
+
   return (
     <div className="container">
-      <div style={{ position: "absolute", alignItems: "flex-end" }}>
-      {showData.length > 0 && <Button variant="contained" color="primary" style={{backgroundColor: "blue", color:"#fff", padding: "7px", borderRadius: 10}} onClick={finalShow}>Show Results</Button>}
-      </div>
+       
       <div className="left-half">
-        <label htmlFor="csvInput" style={{ display: "block", fontFamily: "Comfortaa", fontSize: 36 }}>
+      <Button variant="filled" style={{background: "white", color:"#000", padding: "7px", borderRadius: 10, height: 50, width: 190}} onClick={handleimodal}>Data Ingestion</Button>
+
+        <label htmlFor="csvInput" style={{ display: "block", fontFamily: "Comfortaa", fontSize: 36, marginTop: 20 }}>
           Enter CSV File 1
         </label>
 
@@ -375,7 +420,9 @@ function Main() {
       </div>
 
       <div className="right-half">
-        <label htmlFor="csvInput" style={{ display: "block", fontFamily: "Comfortaa", fontSize: 36, color: "#fff" }}>
+    <Button variant="filled" style={{background: "white", color:"#000", padding: "7px", borderRadius: 10, height: 50, width: 190}} onClick={finalShow}>Show Results</Button>
+
+        <label htmlFor="csvInput" style={{ display: "block", fontFamily: "Comfortaa", fontSize: 36, color: "#fff", marginTop: 20 }}>
           Enter CSV File 2
         </label>
         <input
@@ -394,7 +441,7 @@ function Main() {
 
         {!loading2 && file2 != "" && (
           <>
-            <div style={{ marginTop: 85 }}>
+            <div style={{ marginTop: 18 }}>
 
               <CreateTable cols={cols2} rows={rows2} loading={loading} file={file} />
             </div>
@@ -460,7 +507,10 @@ function Main() {
           aria-describedby="keep-mounted-modal-description"
         >
           <Box sx={style2}>
+          <div style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
             <h2>Final Matched Entries</h2>
+            <a href={`http://127.0.0.1:8000/backend/search-key/?key=${showData[0]['uuid']}`} target='_blank'>CHECK DATABASE ENTRY</a>
+            </div>
             {showData.map(i=>{
               return (
                 <>
@@ -480,11 +530,47 @@ function Main() {
         </Modal>
       ) :
         null}
+
+        {imodal ? (
+        <Modal
+          keepMounted
+          open={imodal}
+          onClose={() => setimodal(false)}
+          aria-labelledby="keep-mounted-modal-title"
+          aria-describedby="keep-mounted-modal-description"
+        >
+          <Box sx={style3}>
+          <div style={{display:"flex", flexDirection:"column", justifyContent:"space-evenly", alignItems:"center"}}>
+         
+          {iloader ? (
+            <>
+          <h1>Ingesting Data..</h1>
+          <Lottie options={defaultOptions1}
+            height={260}
+            width={260}
+          />
+          </>
+          ) :  (
+            <>
+            <h2>Data Ingestion Complete</h2>
+          <Lottie options={defaultOptions2}
+            height={260}
+            width={260}
+          />
+          </>
+          )
+          }
+          </div>
+          </Box>
+        </Modal>
+      ) :
+        null}
       <ToastContainer
         position="top-left"
         type="success"
         theme="colored"
       />
+
     </div>
   )
 }

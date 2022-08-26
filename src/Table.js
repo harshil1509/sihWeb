@@ -9,6 +9,8 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import axios from 'axios';
 import ModalOpener from './Modal'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 
@@ -59,6 +61,16 @@ const rows = [
 
 
 function CreateTable({cols,rows, loading, file}) {
+
+  const notify = (idx) => toast.success(`Search Started With Index ${idx}`, {
+    position: "top-center",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    });
    
     // rows.map(row=>{
     //     row['number'] = rows.ind
@@ -80,7 +92,14 @@ function CreateTable({cols,rows, loading, file}) {
   const [open, setIsOpen] = useState(false)
 
   const makeApiCall =async (idx)=>{
-    const url2 = `http://localhost:8000/backend/fetch-results/?idx=${idx-1}`
+    if(localStorage.getItem('idx')===null || localStorage.getItem('idx')===undefined || localStorage.getItem('idx')===''){
+      localStorage.setItem('idx', idx)
+      notify(idx)
+    }
+    else{
+      idx = localStorage.getItem('idx')
+    }
+    const url2 = `http://localhost:8000/backend/fetch-results1/?idx=${idx-1}`
 
     setIsLoading(true)
     console.log(idx, url2)
@@ -100,9 +119,7 @@ function CreateTable({cols,rows, loading, file}) {
  
   return (
     <div>
-    
-    
-      <ModalOpener open={open} setOpen={setIsOpen} data={resData} columns={cols}/>
+      {/* <ModalOpener open={open} setOpen={setIsOpen} data={resData} columns={cols}/> */}
   
     {file!="" && !loading ? <div>
    
@@ -162,7 +179,7 @@ function CreateTable({cols,rows, loading, file}) {
       </Paper>
     </div> : null}
      
-   
+        <ToastContainer />
     </div>
   )
 }

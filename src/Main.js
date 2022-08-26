@@ -31,12 +31,27 @@ const style = {
   p: 4,
 };
 
+const style2 = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 800,
+  height: 700,
+  overflow: 'scroll',
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
+
 
 const formData = new FormData();
 
 function Main() {
 
   const { register, handleSubmit, formState: { errors } } = useForm();
+  const [open2, setOpen2] = React.useState(false)
   const [open, setOpen] = useState(false);
   const notify = () => toast.success('ENTRY ADDED SUCCESSFULLY !!', {
     position: "top-center",
@@ -46,8 +61,17 @@ function Main() {
     pauseOnHover: true,
     draggable: true,
     progress: undefined,
-    });
+  });
 
+  const notify2 = () => toast.success('AUTOMATIC SEARCH INITIATED', {
+    position: "top-center",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+  });
 
   const defaultOptions = {
     loop: true,
@@ -60,6 +84,7 @@ function Main() {
 
   const [rows, setRows] = React.useState([]);
   const [filteredRow, setFilteredRow] = useState([])
+  const [showData, setShowData] = useState([])
   const [cols1, setCols1] = useState([])
   const [cols2, setCols2] = useState([])
   let tempRows = []
@@ -67,11 +92,27 @@ function Main() {
   const [loading, setLoading] = React.useState(false);
   const [loading2, setLoading2] = React.useState(false);
 
+
   const makeApiCall = async () => {
 
     const url = "http://localhost:8000/backend/upload-csv/"
     try {
       const res = await axios.post(url, formData);
+
+      if (localStorage.getItem('idx')) {
+        const idx = localStorage.getItem('idx')
+        const url2 = `http://localhost:8000/backend/fetch-results1/?idx=${idx - 1}`
+
+        try {
+          const res = await axios.get(url2);
+          notify2()
+          console.log(res.data.data)
+
+        } catch (error) {
+          console.error(error);
+        }
+
+      }
       // console.log(res)
     } catch (error) {
       console.error(error);
@@ -249,7 +290,7 @@ function Main() {
 
         newObj[i] = data[mapping[i]]
       }
-      
+
     })
 
     // make api call and update backend
@@ -277,8 +318,27 @@ function Main() {
     requestSearch(searchedVal);
   };
 
+  const finalShow = async () => {
+    localStorage.removeItem('idx')
+    const url = "http://127.0.0.1:8000/backend/fetch-results2"
+    try {
+      const res = await axios.get(url)
+      console.log(res.data.data)
+      setShowData(res.data.data)
+      setOpen2(true)
+
+    }
+    catch (error) {
+      console.log(error)
+    }
+
+  }
+
   return (
     <div className="container">
+      <div style={{ position: "absolute", alignItems: "flex-end" }}>
+      {showData.length > 0 && <Button variant="contained" color="primary" style={{backgroundColor: "blue", color:"#fff", padding: "7px", borderRadius: 10}} onClick={finalShow}>Show Results</Button>}
+      </div>
       <div className="left-half">
         <label htmlFor="csvInput" style={{ display: "block", fontFamily: "Comfortaa", fontSize: 36 }}>
           Enter CSV File 1
@@ -344,7 +404,7 @@ function Main() {
                 backgroundColor: "blue",
                 padding: "18px 36px",
                 fontSize: "12px",
-                color:"#fff"
+                color: "#fff"
               }} onClick={() => setOpen(true)}>Add Custom Entry</Button>
             </div>
           </>
@@ -361,7 +421,7 @@ function Main() {
           aria-describedby="keep-mounted-modal-description"
         >
           <Box sx={style}>
-          <h2>Please fill in the details below</h2>
+            <h2>Please fill in the details below</h2>
 
 
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -369,33 +429,62 @@ function Main() {
                 Object.keys(mapping).map(i => {
                   return (
                     <div>
-                    {mapping[i] != 'Unnamed' ?
-                    (
-                      <div style={{display:"flex", flexDirection:"row", justifyContent:"space-between", marginTop: 15}}>
-                      <h4>{mapping[i] + ":"} </h4>
+                      {mapping[i] != 'Unnamed' ?
+                        (
+                          <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", marginTop: 15 }}>
+                            <h4>{mapping[i] + ":"} </h4>
 
-                      <input {...register(mapping[i])} style={{width: 280, fontSize: 19, alignItems:"center", justifyContent:"center", alignContent:"center", backgroundColor:"lightcyan"}}/>
-                      </div>
-                    )
-                      : null}
+                            <input {...register(mapping[i])} style={{ width: 280, fontSize: 19, alignItems: "center", justifyContent: "center", alignContent: "center", backgroundColor: "lightcyan" }} />
+                          </div>
+                        )
+                        : null}
 
                     </div>
                   )
                 })
               }
-              <div style={{display:"flex", alignItems:"center", justifyContent : "center", marginTop: 15}}>
-              <input type="submit" style={{width: 150, height: 45, backgroundColor:"blue", color:"#fff", borderRadius: 45, fontSize: 20}}/>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 15 }}>
+                <input type="submit" style={{ width: 150, height: 45, backgroundColor: "blue", color: "#fff", borderRadius: 45, fontSize: 20 }} />
               </div>
             </form>
           </Box>
         </Modal>
       ) :
         null}
-        <ToastContainer 
-          position="top-left"
-          type="success"
-          theme="colored"
-        />
+      {open2 ? (
+        <Modal
+          keepMounted
+          open={open2}
+          onClose={() => setOpen2(false)}
+          aria-labelledby="keep-mounted-modal-title"
+          aria-describedby="keep-mounted-modal-description"
+        >
+          <Box sx={style2}>
+            <h2>Final Matched Entries</h2>
+            {showData.map(i=>{
+              return (
+                <>
+                {Object.keys(i).map(j=>{
+                  return (
+                    <div style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                      <h4 style={{color:"red"}}>{j}</h4>
+                      <p>{i[j]}</p>
+                    </div>
+                  )
+                })}
+                <hr/>
+                </>
+              )
+            })}
+          </Box>
+        </Modal>
+      ) :
+        null}
+      <ToastContainer
+        position="top-left"
+        type="success"
+        theme="colored"
+      />
     </div>
   )
 }
